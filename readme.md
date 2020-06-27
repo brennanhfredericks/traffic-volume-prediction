@@ -1,0 +1,1 @@
+The data used as part of my learning adventure is the property of SANRAL (https://www.nra.co.za/) and originates from the ITS Freeway Management Project (www.https://www.i-traffic.co.za/) 
