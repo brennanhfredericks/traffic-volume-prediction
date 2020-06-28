@@ -243,7 +243,6 @@ class train_dev_test:
 
                 yield X,Y.reshape(-1)
 
-
     def __load_raw_data(self, dataset, dtype, raw_row_idx=None, raw_col_idx=None, chunksize=1000):
 
         with self.__raw_data as data:
@@ -262,7 +261,7 @@ class train_dev_test:
 
             for i in __t:
                 data[dataset].read_direct(__arr, source_sel=np.s_[
-                                          i, :], dest_sel=np.s_[:, :])
+                                          i])
 
                 if raw_col_idx is not None:
                     yield __arr[:, raw_col_idx]
@@ -278,7 +277,7 @@ class train_dev_test:
 
             __arr = np.zeros((__lo, data[dataset].shape[-1]), dtype=dtype)
             data[dataset].read_direct(__arr, source_sel=np.s_[
-                                      __t, :], dest_sel=np.s_[:, :])
+                                      __t])
 
             if raw_col_idx is not None:
                 yield __arr[:, raw_col_idx]
