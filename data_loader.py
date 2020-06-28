@@ -3,7 +3,7 @@ import os
 import random
 import numpy as np
 import more_itertools
-
+import tensorflow as tf
 
 class hdf5_manager:
 
@@ -141,6 +141,34 @@ class train_dev_test:
         print(f"dev indices: {self.dev_indices.shape}")
         print(f"test indices: {self.test_indices.shape}")
 
+    def train_ds(self,batch_size=128,buffer_size=10000):
+
+        __train_ds = tf.data.Dataset.from_generator(
+            lambda: self.__sequence_generator(self.train_indices),
+            (tf.float32, tf.float32),
+            output_shapes=(tf.TensorShape([self.history_size,self.__data_shape[-1]]),tf.TensorShape([self.future_size]))
+        )
+
+        return __train_ds.shuffle(buffer_size).batch(batch_size).cache()
+
+    def dev_ds(self,batch_size=128,buffer_size=1000):
+        __dev_ds = tf.data.Dataset.from_generator(
+            lambda: self.__sequence_generator(self.dev_indices),
+            (tf.float32, tf.float32),
+            output_shapes=(tf.TensorShape([self.history_size,self.__data_shape[-1]]),tf.TensorShape([self.future_size]))
+        )
+
+        return __dev_ds.shuffle(buffer_size).batch(batch_size).cache()
+
+    def test_ds(self,batch_size=128):
+        __test_ds = tf.data.Dataset.from_generator(
+            lambda: self.__sequence_generator(self.test_indices),
+            (tf.float32, tf.float32),
+            output_shapes=(tf.TensorShape([self.history_size,self.__data_shape[-1]]),tf.TensorShape([self.future_size]))
+        )
+
+        return __test_ds.batch(batch_size)
+
     def __init_indices(self):
 
         self.__valid_indices = []
@@ -172,6 +200,49 @@ class train_dev_test:
             np.array(self.dev_indices).reshape(-1, 1), axis=0, kind='mergesort')
         self.test_indices = np.sort(
             np.array(self.test_indices).reshape(-1, 1), axis=0, kind='mergesort')
+
+    def __sequence_generator(self,indices):
+        #normalize features
+        def z_score(X,_):
+            """
+            x_prime = (x - mean)/variance
+            """
+            #select the volume class columns
+            X[:,:3] = np.divide(np.subtract(X[:,:3],self.mean),self.variance)
+
+            return X
+
+        # create targets
+        def max_volume(Y,_):
+            """
+            max_volme = class_1 + class_2 + class_3
+            """
+
+            Y = np.sum(Y[:,:3],axis=1,keepdims=True)
+
+            #normalize targets
+            Y = np.divide(np.subtract(Y,np.sum(self.mean)),np.sum(self.variance))
+
+            return Y
+
+        __window = np.zeros((self.history_size+self.future_size,self.__data_shape[-1]))
+
+        with self.__raw_data as data:
+            for i in indices.reshape(-1):
+                data["links/this"].read_direct(__window,source_sel=np.s_[i:i+__window.shape[0]])
+
+                X = __window[:self.history_size]
+
+                #selecting class columns
+                Y = __window[-1*self.future_size:,:3]
+
+                #target create function
+                Y = np.apply_over_axes(max_volume,Y,[1])
+                #normalize feature function
+                X = np.apply_over_axes(z_score,X,[1])
+
+                yield X,Y.reshape(-1)
+
 
     def __load_raw_data(self, dataset, dtype, raw_row_idx=None, raw_col_idx=None, chunksize=1000):
 
@@ -276,21 +347,16 @@ class train_dev_test:
 
 
 if __name__ == "__main__":
-    history,future = 6*6,6*3
+    tdt = train_dev_test("./Data/single_vds.hdf5")
+    tdt.init(load_params=True)
+    
+    
+    # for i,(X,Y) in enumerate(tdt.test_ds()):
+    #     print(i,X.shape,Y.shape)
+    #     if i == 10:
+    #         break
 
-    fk = train_dev_test("./Data/single_vds.hdf5")
 
-    fk.init(history_size=history,future_size=future)
-
-    fk.params
-
-    fk.init(history_size=history,future_size=future)
-
-    fk.params
-
-    fk.init(load_params=True)
-
-    fk.params
 
 
 
