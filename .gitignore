@@ -1,5 +1,8 @@
 #folders
 /Reference
+/Models
+/Notes
+/Tensorboard_Logs
 #files
 **.pyc
 data_builder.py

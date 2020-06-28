@@ -86,6 +86,7 @@ class train_dev_test:
         self.__raw_data = hdf5_manager(filepath, load=True)
 
         self.__data_shape = self.__raw_data.read("links/this").shape
+        self.num_features = self.__data_shape[-1]
 
         self.__raw_data.close()
 
@@ -130,6 +131,10 @@ class train_dev_test:
                     "no parameters have been stored -> set load_params=False to initial")
 
             self.__load_params()
+
+    @property
+    def in_out(self):
+        return self.history_size,self.future_size,self.num_features
 
     @property
     def params(self):
