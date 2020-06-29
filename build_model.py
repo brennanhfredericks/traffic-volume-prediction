@@ -65,12 +65,12 @@ def train(train_dev_test, _model_func, _name, _dir_name, BATCH_SIZE=128, EPOCHS=
     # compile model
     model.compile(optimizer=optimizer, loss=loss, metrics=metrics)
 
-    #
+    
     out_name = output_folder + f"/{_name}_{timestamp}/"
     # fit parametersls
     callbacks = [
         History(),
-        EarlyStopping("val_loss", min_delta=1e-2, patience=5),
+        EarlyStopping("val_loss", min_delta=1e-1, patience=5),
         ModelCheckpoint(filepath=out_name +
                         "model_{epoch}_{val_loss:.4f},", save_best_only=True),
         TensorBoard(log_dir=f"../Tensorboard_Logs/{_name}_{timestamp}")
