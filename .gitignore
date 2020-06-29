@@ -5,5 +5,4 @@
 /Tensorboard_Logs
 #files
 **.pyc
-data_builder.py
-database.py
+**.py
